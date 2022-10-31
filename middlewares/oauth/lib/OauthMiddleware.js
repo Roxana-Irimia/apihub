@@ -29,7 +29,9 @@ function OAuthMiddleware(server) {
   }, oauthConfig.keyTTL);
 
   function startAuthFlow(req, res) {
+    printDebugLog("Starting authentication flow");
     const loginContext = webClient.getLoginInfo(oauthConfig);
+    printDebugLog("Login info", JSON.stringify(loginContext));
     util.encryptLoginInfo(CURRENT_ENCRYPTION_KEY_PATH, loginContext, (err, encryptedContext) => {
       if (err) {
         return sendUnauthorizedResponse(req, res, "Unable to encrypt login info");
@@ -45,11 +47,12 @@ function OAuthMiddleware(server) {
   }
 
   function loginCallbackRoute(req, res) {
+    printDebugLog("Entered login callback");
     let cbUrl = req.url;
     let query = urlModule.parse(cbUrl, true).query;
     const {loginContextCookie} = util.parseCookies(req.headers.cookie);
     if (!loginContextCookie) {
-      debugMessage("Logout because loginContextCookie is missing.")
+      printDebugLog("Logout because loginContextCookie is missing.")
       return logout(res);
     }
     util.decryptLoginInfo(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, loginContextCookie, (err, loginContext) => {
@@ -58,36 +61,38 @@ function OAuthMiddleware(server) {
       }
 
       if (Date.now() - loginContext.date > oauthConfig.sessionTimeout) {
-        debugMessage("Logout because loginContextCookie is expired.")
+        printDebugLog("Logout because loginContextCookie is expired.")
         return logout(res);
       }
 
       const queryCode = query['code'];
       const queryState = query['state'];
-
-
-      webClient.loginCallback({
+      const context = {
         clientState: loginContext.state,
         clientFingerprint: loginContext.fingerprint,
         clientCode: loginContext.codeVerifier,
         queryCode,
         queryState,
         origin: req.headers.host,
-      }, (err, tokenSet) => {
+      };
+
+      printDebugLog("Requesting token set");
+      printDebugLog("context", JSON.stringify(context));
+      webClient.loginCallback(context, (err, tokenSet) => {
         if (err) {
           return sendUnauthorizedResponse(req, res, "Unable to get token set", err);
         }
 
-        debugMessage("Access token", tokenSet.access_token);
+        printDebugLog("Access token", tokenSet.access_token);
         util.encryptTokenSet(CURRENT_ENCRYPTION_KEY_PATH, tokenSet, (err, encryptedTokenSet) => {
           if (err) {
             return sendUnauthorizedResponse(req, res, "Unable to encrypt access token", err);
           }
 
           const {payload} = util.parseAccessToken(tokenSet.access_token);
-          debugMessage("Access token payload", payload);
+          printDebugLog("Access token payload", payload);
           const SSODetectedId = util.getSSODetectedIdFromDecryptedToken(tokenSet.access_token);
-          debugMessage("SSODetectedId", SSODetectedId);
+          printDebugLog("SSODetectedId", SSODetectedId);
           res.writeHead(301, {
             Location: "/",
             "Set-Cookie": [`accessTokenCookie=${encryptedTokenSet.encryptedAccessToken}`, "isActiveSession=true", `refreshTokenCookie=${encryptedTokenSet.encryptedRefreshToken}`, `SSOUserId = ${payload.sub}`, `SSODetectedId = ${SSODetectedId}`, `loginContextCookie=; Max-Age=0`],
@@ -115,7 +120,7 @@ function OAuthMiddleware(server) {
   }
 
 
-  function debugMessage(...args) {
+  function printDebugLog(...args) {
     if (oauthConfig.debugLogEnabled) {
       logger.debug(...args);
     }
@@ -151,7 +156,6 @@ function OAuthMiddleware(server) {
 
     const canSkipOAuth = urlsToSkip.some((urlToSkip) => url.indexOf(urlToSkip) === 0);
     if (canSkipOAuth) {
-      debugMessage("Skipping OAuth authentication for url", url);
       next();
       return;
     }
@@ -177,10 +181,10 @@ function OAuthMiddleware(server) {
 
     if (!accessTokenCookie) {
       if (!isActiveSession) {
-        debugMessage("Redirect to start authentication flow because accessTokenCookie and isActiveSession are missing.")
+        printDebugLog("Redirect to start authentication flow because accessTokenCookie and isActiveSession are missing.")
         return startAuthFlow(req, res);
       } else {
-        debugMessage("Logout because accessTokenCookie is missing and isActiveSession is present.")
+        printDebugLog("Logout because accessTokenCookie is missing and isActiveSession is present.")
         return startLogoutPhase(res);
       }
     }
@@ -189,14 +193,14 @@ function OAuthMiddleware(server) {
     util.validateEncryptedAccessToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, jwksEndpoint, accessTokenCookie, oauthConfig.sessionTimeout, (err) => {
       if (err) {
         if (err.message === errorMessages.ACCESS_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
-          debugMessage("Logout because accessTokenCookie decryption failed or session has expired.")
+          printDebugLog("Logout because accessTokenCookie decryption failed or session has expired.")
           return startLogoutPhase(res);
         }
 
         return webClient.refreshToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, refreshTokenCookie, (err, tokenSet) => {
           if (err) {
             if (err.message === errorMessages.REFRESH_TOKEN_DECRYPTION_FAILED || err.message === errorMessages.SESSION_EXPIRED) {
-              debugMessage("Logout because refreshTokenCookie decryption failed or session has expired.")
+              printDebugLog("Logout because refreshTokenCookie decryption failed or session has expired.")
               return startLogoutPhase(res);
             }
             return sendUnauthorizedResponse(req, res, "Unable to refresh token");
@@ -210,18 +214,18 @@ function OAuthMiddleware(server) {
 
       util.getSSODetectedIdFromEncryptedToken(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, accessTokenCookie, (err, SSODetectedId)=>{
         if (err) {
-            debugMessage("Logout because accessTokenCookie decryption failed or session has expired.")
+            printDebugLog("Logout because accessTokenCookie decryption failed or session has expired.")
             return startLogoutPhase(res);
         }
 
-        debugMessage("SSODetectedId", SSODetectedId);
+        printDebugLog("SSODetectedId", SSODetectedId);
         req.headers["user-id"] = SSODetectedId;
         if (url.includes("/mq/")) {
           return next();
         }
         util.updateAccessTokenExpiration(CURRENT_ENCRYPTION_KEY_PATH, PREVIOUS_ENCRYPTION_KEY_PATH, accessTokenCookie, (err, encryptedAccessToken)=>{
           if (err) {
-            debugMessage("Logout because accessTokenCookie decryption failed.")
+            printDebugLog("Logout because accessTokenCookie decryption failed.")
             return startLogoutPhase(res);
           }
 
