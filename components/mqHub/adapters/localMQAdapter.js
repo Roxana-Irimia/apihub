@@ -340,10 +340,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-	logger.warn(`Loading Local MQ Adapter for domain: ${domain}`);
-	logger.warn(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
-	logger.warn(`Warning: Local MQ Adapter should be used only during development!`);
-	logger.warn(`!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+	logger.info(`Loading Local MQ Adapter for domain: ${domain}`);
 
 	const mqConfig = config.getConfig("componentsConfig", "mq");
 	if (mqConfig && mqConfig.connectionTimeout) {
