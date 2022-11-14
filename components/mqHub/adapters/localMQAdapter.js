@@ -23,7 +23,6 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 
 	Object.assign(settings, configuration);
 
-	let openedConnections = {};
 	function getQueueStoragePath(queueName) {
 		const opendsu = require("opendsu");
 		const crypto = opendsu.loadAPI('crypto');
@@ -215,10 +214,10 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-	function readMessage(queueName, sub) {
+	function readMessage(queueName, callback) {
 		checkQueueLoad(queueName, (err, capacity) => {
 			if (err) {
-				return sub(err);
+				return callback(err);
 			}
 
 			if (typeof subscribers[queueName] === 'undefined') {
@@ -226,7 +225,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 			}
 
 			const subs = subscribers[queueName];
-			subs.push(sub);
+			subs.push(callback);
 
 			if (capacity) {
 				return _readMessage(queueName, (err, message) => {
@@ -244,17 +243,13 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-	function send(queueName, to, statusCode, message, headers) {
-		if (openedConnections[queueName]) {
-			clearTimeout(openedConnections[queueName]);
-			delete openedConnections[queueName];
-		}
-		to.statusCode = statusCode;
+	function send(res, statusCode, message, headers) {
+		res.statusCode = statusCode;
 
 		if (headers) {
 			for (let prop in headers) {
 				try {
-                    to.setHeader(prop, headers[prop]);
+                    res.setHeader(prop, headers[prop]);
 				} catch (e) {
                     logger.error(`Failed to set headers after end() was called.`, e);
                     return;
@@ -263,9 +258,9 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		}
 
 		if (message) {
-			to.write(message);
+			res.write(message);
 		}
-		to.end();
+		res.end();
 	}
 
 	function putMessageHandler(request, response) {
@@ -273,7 +268,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		readBody(request, (err, message) => {
 			if (err) {
 				logger.error(`Caught an error during body reading from put message request`, err);
-				return send(queueName, response, 500);
+				return send(response, 500);
 			}
 
 			if(typeof settings.mq_fsMessageMaxSize !== "undefined"){
@@ -281,7 +276,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 				try{
 					let messageAsBuffer = Buffer.from(message);
 					if(messageAsBuffer.length > messageMaxSize){
-						send(queueName, response, 403, "Message size exceeds domain specific limit.");
+						send(response, 403, "Message size exceeds domain specific limit.");
 						return;
 					}
 				}catch(err){
@@ -292,23 +287,43 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 			putMessage(queueName, message, (err) => {
 				if (err) {
 					logger.error(`Caught an error during adding message to queue`, err);
-					return send(queueName, response, 500, err.sendToUser ? err.message : undefined);
+					return send(response, 500, err.sendToUser ? err.message : undefined);
 				}
-				send(queueName, response, 200);
+				send(response, 200);
 			});
 		});
 	}
 
 	function getMessageHandler(request, response) {
 		let queueName = request.params.queueName;
-		readMessage(queueName, (err, message) => {
-			if (err) {
-				send(queueName, response, 500);
+		let wasCalled = false;
+		const readMessageCallback = (err, message) => {
+			if (wasCalled) {
 				return;
 			}
-			send(queueName, response, 200, JSON.stringify(message), {'Content-Type': 'application/json'});
-			return;
-		});
+			wasCalled = true;
+			if (err) {
+				send(response, 500);
+				return;
+			}
+			send(response, 200, JSON.stringify(message), {'Content-Type': 'application/json'});
+		};
+
+		const mqConfig = config.getConfig("componentsConfig", "mq");
+		if (mqConfig && mqConfig.connectionTimeout) {
+			setTimeout(() => {
+				if (!wasCalled) {
+					const fnRefIndex = subscribers[queueName].findIndex(fn => fn === readMessageCallback);
+					if (fnRefIndex >= 0) {
+						subscribers[queueName].splice(fnRefIndex, 1);
+					}
+					response.statusCode = 204;
+					response.end();
+				}
+			}, mqConfig.connectionTimeout);
+		}
+
+		readMessage(queueName, readMessageCallback);
 	}
 
 	function deleteMessageHandler(request, response) {
@@ -317,7 +332,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 			if (err) {
 				logger.error(`Caught an error during deleting message ${messageId} from queue ${queueName}`, err);
 			}
-			send(queueName, response, err ? 500 : 200);
+			send(response, err ? 500 : 200);
 		});
 	}
 
@@ -326,36 +341,21 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		readMessage(queueName, (err, message) => {
 			if (err) {
 				logger.error(`Caught an error during message reading from ${queueName}`, err);
-				send(queueName, response, 500);
+				send(response, 500);
 				return;
 			}
 			deleteMessage(queueName, message.messageId, (err) => {
 				if (err) {
 					logger.error(`Caught an error during message deletion from ${queueName} on the take handler`, err);
-					return send(queueName, response, 500);
+					return send(response, 500);
 				}
 
-				return send(queueName, response, 200, JSON.stringify(message), {'Content-Type': 'application/json'});
+				return send(response, 200, JSON.stringify(message), {'Content-Type': 'application/json'});
 			});
 		});
 	}
 
 	logger.info(`Loading Local MQ Adapter for domain: ${domain}`);
-
-	const mqConfig = config.getConfig("componentsConfig", "mq");
-	if (mqConfig && mqConfig.connectionTimeout) {
-		function signalServerAlive(req, res, next) {
-			openedConnections[req.params.queueName] = setTimeout(() => {
-				res.statusCode = 204;
-				res.end();
-			}, mqConfig.connectionTimeout);
-
-			next();
-		}
-
-		server.get(`${prefix}/${domain}/get/:queueName/:signature_of_did`, signalServerAlive); //  > {message}
-		server.get(`${prefix}/${domain}/take/:queueName/:signature_of_did`, signalServerAlive); //  > message
-	}
 
 	server.put(`${prefix}/${domain}/put/:queueName`, putMessageHandler); //< message
 
