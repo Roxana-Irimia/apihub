@@ -4,7 +4,7 @@ module.exports = async () => {
 
     const worker_threads = "worker_threads";
     const { parentPort, workerData } = require(worker_threads);
-    logger.info(`Node worker started for: `, workerData);
+    logger.trace(`Node worker started for: `, workerData);
 
     const resolver = require("opendsu").loadApi("resolver");
     const dsu = await $$.promisify(resolver.loadDSU)(workerData.keySSI);
@@ -14,7 +14,7 @@ module.exports = async () => {
     const CHUNK_SIZE = 1024 * 1024;
 
     parentPort.on("message", async (task) => {
-        logger.info("Handling task", task);
+        logger.trace("Handling task", task);
         const { requestedPath } = task;
         let { range } = task;
 

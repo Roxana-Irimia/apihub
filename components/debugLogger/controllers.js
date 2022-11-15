@@ -49,10 +49,10 @@ function createHandlerAppendToLog(server) {
             response.send(500);
             logger.error(err);
             logger.error(err);
-            return;
+
           } else {
             response.send(200, data);
-            return;
+
           }
         });
       } else {
@@ -60,10 +60,10 @@ function createHandlerAppendToLog(server) {
           if (err) {
             response.send(500);
             logger.error(err);
-            return;
+
           } else {
             response.send(200, data);
-            return;
+
           }
         });
       }
@@ -76,7 +76,7 @@ function createHandlerAppendToLog(server) {
 
 function createHandlerReadFromLog(server) {
   return function readFromLog(request, response) {
-    logger.log('running');
+    logger.trace('running');
     const today = new Date().toISOString().split('T')[0];
     const anchorID = request.params.anchorID;
     const queryObject = url.parse(request.url, true).query;

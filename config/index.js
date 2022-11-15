@@ -24,7 +24,7 @@ function loadAllDomainConfigs(configFolderPath) {
                 .filter((domainFile) => domainFile.endsWith(".json"))
                 .forEach((domainFile) => {
                     const domain = domainFile.substring(0, domainFile.lastIndexOf("."));
-                    logger.info(`Loading config for domain '${domain}'`);
+                    logger.trace(`Loading config for domain '${domain}'`);
 
                     try {
                         const domainConfig = fs.readFileSync(path.join(domainsFolderPath, domainFile));
@@ -47,16 +47,16 @@ function ensureConfigsAreLoaded() {
     if(!apihubConfig) {
         let apihubJson;
         if (typeof process.env.PSK_CONFIG_LOCATION === "undefined") {
-            logger.info("PSK_CONFIG_LOCATION env variable not set. Not able to load any external config. Using default configuration.")
+            logger.trace("PSK_CONFIG_LOCATION env variable not set. Not able to load any external config. Using default configuration.")
             apihubJson = {};
         } else {
             const fs = require("fs");
             const configFolderPath = path.resolve(process.env.PSK_CONFIG_LOCATION);
-            logger.info("Trying to read the apihub.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
+            logger.trace("Trying to read the apihub.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
             const apihubConfigPath = path.join(configFolderPath, 'apihub.json');
 
             if(!checkIfFileExists(apihubConfigPath)) {
-                logger.info("Trying to read the server.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
+                logger.trace("Trying to read the server.json file from the location pointed by PSK_CONFIG_LOCATION env variable.");
                 const serverJsonConfigPath = path.join(configFolderPath, 'server.json');
 
                 let serverJson;
@@ -124,7 +124,7 @@ function ApihubConfig(conf) {
     conf = createConfig(conf, defaultConf);
     conf.defaultComponents = defaultConf.activeComponents;
     if(conf.isDefaultComponent){
-        logger.info("\n\nBe aware that there is a method on the config called isDefaultComponent. You need to check and change your config name.\n\n");
+        logger.trace("\n\nBe aware that there is a method on the config called isDefaultComponent. You need to check and change your config name.\n\n");
     }
     conf.isDefaultComponent = function(componentName) {
         return defaultConf.activeComponents.indexOf(componentName) !== -1 || defaultConf.componentsConfig[componentName];
@@ -154,13 +154,13 @@ function getTokenIssuers(callback) {
     }
 
     const filePath = path.join(path.resolve(process.env.PSK_CONFIG_LOCATION), "issuers-public-identities");
-    logger.info(
+    logger.trace(
         `Trying to read the token-issuers.txt file from the location pointed by PSK_CONFIG_LOCATION env variable: ${filePath}`
     );
 
     fs.access(filePath, fs.F_OK, (err) => {
         if (err) {
-            logger.info(`${filePath} doesn't exist so skipping it`);
+            logger.trace(`${filePath} doesn't exist so skipping it`);
             tokenIssuers = [];
             callback(null, tokenIssuers);
         }
@@ -200,7 +200,7 @@ async function getSafeDomainConfig(domain, ...configKeys){
             const getDomainInfo = $$.promisify(adminService.getDomainInfo);
             let domainInfo = await getDomainInfo(domain);
             if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
-                logger.info(`Config for domain '${domain}' was loaded from admin service.`);
+                logger.trace(`Config for domain '${domain}' was loaded from admin service.`);
                 return getDomainConfig(domainInfo.cloneFromDomain);
             }
         }catch(err){
@@ -230,12 +230,12 @@ function getDomainConfig(domain, ...configKeys) {
     }
 
     if (typeof process.env.PSK_CONFIG_LOCATION === "undefined") {
-        logger.info('PSK_CONFIG_LOCATION env variable not set. Not able to load domain config. Using default configuration.')
+        logger.trace('PSK_CONFIG_LOCATION env variable not set. Not able to load domain config. Using default configuration.')
         return getConfigResult({});
     }
 
     const domainConfigPath = getDomainConfigFilePath(domain);
-    logger.info(`Trying to read the config for domain '${domain}' at location: ${domainConfigPath}`);
+    logger.trace(`Trying to read the config for domain '${domain}' at location: ${domainConfigPath}`);
 
     try {
         const fsName = "fs";

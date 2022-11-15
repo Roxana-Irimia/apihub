@@ -23,7 +23,7 @@ async function handleCreateWallet(request, response) {
         const walletSSI = keySSISpace.createTemplateWalletSSI(domain, credential);
         const seedSSI = await $$.promisify(keySSISpace.createSeedSSI)(domain);
 
-        logger.info(`[Stream] Creating wallet ${walletSSI.getIdentifier()} for user ${userId}...`);
+        logger.trace(`[Stream] Creating wallet ${walletSSI.getIdentifier()} for user ${userId}...`);
         const walletDSU = await $$.promisify(resolver.createDSUForExistingSSI)(walletSSI, { dsuTypeSSI: seedSSI });
 
         const writableDSU = walletDSU.getWritableDSU();
@@ -44,7 +44,7 @@ async function handleCreateWallet(request, response) {
             sharedEnclaveKeySSI,
         };
 
-        logger.info(`[Stream] Settings config for wallet ${await $$.promisify(walletSSI.getAnchorId)()}`, environmentConfig);
+        logger.trace(`[Stream] Settings config for wallet ${await $$.promisify(walletSSI.getAnchorId)()}`, environmentConfig);
         await $$.promisify(writableDSU.writeFile)("/environment.json", JSON.stringify(environmentConfig));
 
         await $$.promisify(writableDSU.writeFile)("/metadata.json", JSON.stringify({ userId }));

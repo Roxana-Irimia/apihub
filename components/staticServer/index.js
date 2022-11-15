@@ -20,14 +20,16 @@ function StaticServer(server) {
         });
 
         function serverTarget(targetPath) {
-            logger.info("Serving summary for dir:", targetPath);
+            logger.trace("Serving summary for dir:", targetPath);
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
+                    logger.info(0x03, `Path <${targetPath}> was not found`)
                     res.statusCode = 404;
                     res.end();
                     return;
                 }
                 if (!stats.isDirectory()) {
+                    logger.info(0x03, `<${targetPath}> is not a directory`)
                     res.statusCode = 403;
                     res.end();
                     return;
@@ -158,7 +160,7 @@ function StaticServer(server) {
                 //if any error... we fallback to normal sendFile method
                 return sendFile(res, file);
             }
-            logger.info("Responding with template instead of file.");
+            logger.trace("Responding with template instead of file.");
             res.statusCode = 200;
 
             setMimeTypeOnResponse(req.url, res);
@@ -247,6 +249,7 @@ function StaticServer(server) {
                     return tryToCreateAtRuntimeFromTemplates(req,(err, content)=>{
                         if(err){
                             //if any error... we have to return 404
+                            logger.info(0x03, `Failed to create from templates`)
                             res.statusCode = 404;
                             res.end();
                             return;
@@ -274,6 +277,7 @@ function StaticServer(server) {
                     const defaultPath = path.join(targetPath, defaultFileName);
                     fs.stat(defaultPath, function (err) {
                         if (err) {
+                            logger.info(0x03, `Path <${defaultPath}> was not found`)
                             res.statusCode = 403;
                             res.end();
                             return;

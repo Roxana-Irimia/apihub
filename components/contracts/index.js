@@ -39,7 +39,7 @@ function Contract(server) {
             return callback(`[Contracts] Cannot boot worker for domain '${domain}' due to missing validatorDID`);
         }
 
-        logger.info(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
+        logger.trace(`[Contracts] Starting contract handler for domain '${domain}'...`, domainConfig);
 
         const { rootFolder } = server;
         const externalStorageFolder = require("path").join(rootFolder, config.getConfig("externalStorage"));

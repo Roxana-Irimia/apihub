@@ -9,12 +9,12 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
     const logger = $$.getLogger("OBA", "apihub/anchoring", getLogFilePath(server));
 
     this.createAnchor = function (callback) {
-        logger.info(1, `Anchoring for ${anchorId} started`);
+        logger.trace(1, `Anchoring for ${anchorId} started`);
         fsHandler.createAnchor((err, res) => {
             if (err) {
                 return callback(err);
             }
-            logger.info(`Optimistic create anchor ended with success.`);
+            logger.trace(`Optimistic create anchor ended with success.`);
 
             ethSyncService.storeAnchor("createAnchor", anchorId, anchorValue, domainConfig,(err) => {
                 if (err) {
@@ -22,26 +22,26 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
                     return;
                 }
 
-                logger.info(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                logger.trace(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
                 return callback(undefined, res);
             })
         });
     }
 
     this.appendAnchor = function (callback) {
-        logger.info(1, `Anchoring for ${anchorId} started`);
+        logger.trace(1, `Anchoring for ${anchorId} started`);
         fsHandler.appendAnchor((err, res) => {
             if (err) {
                 return callback(err);
             }
-            logger.info(`Optimistic append anchor ended with success.`);
+            logger.trace(`Optimistic append anchor ended with success.`);
             ethSyncService.storeAnchor("appendAnchor", anchorId, anchorValue, domainConfig, (err) => {
                 if (err) {
                     logger.error(`failed to store anchor ${fsHandler.commandData.anchorId} in db.`);
                     return;
                 }
 
-                logger.info(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
+                logger.trace(`Anchor ${fsHandler.commandData.anchorId} stored in db successfully.`);
                 return callback(undefined, res);
 
             })
@@ -49,7 +49,7 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
     }
 
     function readAllVersionsFromBlockchain(callback) {
-        logger.info(`Preparing to read info about anchorId ${fsHandler.commandData.anchorId} from the blockchain...`);
+        logger.trace(`Preparing to read info about anchorId ${fsHandler.commandData.anchorId} from the blockchain...`);
         ethHandler.getAllVersions((err, anchorVersions) => {
             if (err) {
                 logger.error(`AnchorId ${fsHandler.commandData.anchorId} syncing blockchain failed. ${err}`);
@@ -65,12 +65,12 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
             }
 
             if (history === "") {
-                logger.info(`AnchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
+                logger.trace(`AnchorId ${fsHandler.commandData.anchorId} synced but no history found.`);
                 //if we don't retrieve info from blockchain we exit
                 return callback(undefined, anchorVersions);
             }
 
-            logger.info(`Found info about anchorId ${fsHandler.commandData.anchorId} in blockchain.`);
+            logger.trace(`Found info about anchorId ${fsHandler.commandData.anchorId} in blockchain.`);
 
             //storing locally the history of the anchorId read from the blockchain
             fsHandler.fps.createAnchor(anchorId, history, (err) => {
@@ -78,7 +78,7 @@ function OBA(server, domainConfig, anchorId, anchorValue, ...args) {
                     logger.error(`Failed to store info about anchorId ${fsHandler.commandData.anchorId} on local because of ${err}`);
                     return callback(err);
                 }
-                logger.info(`AnchorId ${fsHandler.commandData.anchorId} fully synced.`);
+                logger.trace(`AnchorId ${fsHandler.commandData.anchorId} fully synced.`);
                 //even if we read all the versions of anchorId we return only the last one
                 return callback(undefined, anchorVersions);
             });

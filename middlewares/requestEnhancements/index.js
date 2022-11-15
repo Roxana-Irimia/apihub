@@ -16,7 +16,7 @@ function setupRequestEnhancements(server) {
 		next();
 	});
 
-    logger.info(`${constants.LOG_IDENTIFIER}`, "Request API enhancements were set up.");
+    logger.trace(`${constants.LOG_IDENTIFIER}`, "Request API enhancements were set up.");
 }
 
 module.exports = setupRequestEnhancements;

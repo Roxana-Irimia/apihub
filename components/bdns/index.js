@@ -52,7 +52,7 @@ function BDNS(server) {
         }
 
         try {
-            logger.info("Testing to see if admin component is active and can be used to expand BDNS configuration.");
+            logger.trace("Testing to see if admin component is active and can be used to expand BDNS configuration.");
             let adminService = require("./../admin").getAdminService();
             let getDomains = $$.promisify(adminService.getDomains);
             let domains = await getDomains();
@@ -68,9 +68,9 @@ function BDNS(server) {
                 Object.assign(newRegistry, bdnsExtensions);
                 bdnsCache = JSON.stringify(newRegistry);
             }
-            logger.info("BDNS configuration was updated accordingly to information retrieved from admin service");
+            logger.trace("BDNS configuration was updated accordingly to information retrieved from admin service");
         } catch (err) {
-            logger.info("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
+            logger.trace("Admin service not available, skipping the process of loading dynamic configured domains. This is not a problem, it's a configuration.");
         }
     }
 
@@ -88,7 +88,7 @@ function BDNS(server) {
             response.statusCode = 200;
             response.end(bdnsCache);
         } else {
-            logger.info("Bdns config not available at this moment. A 404 response will be sent.");
+            logger.trace("Bdns config not available at this moment. A 404 response will be sent.");
             response.statusCode = 404;
             logger.error('BDNS hosts not found');
             return response.end('BDNS hosts not found');

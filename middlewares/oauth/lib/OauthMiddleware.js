@@ -5,7 +5,7 @@ const urlModule = require("url");
 function OAuthMiddleware(server) {
   const logger = $$.getLogger("OAuthMiddleware", "apihub/oauth");
 
-  logger.info(`Registering OAuthMiddleware`);
+  logger.trace(`Registering OAuthMiddleware`);
   const fs = require("fs");
   const config = require("../../../config");
   const oauthConfig = config.getConfig("oauthConfig");

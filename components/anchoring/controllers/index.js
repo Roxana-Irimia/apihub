@@ -1,7 +1,7 @@
 const {ALIAS_SYNC_ERR_CODE} = require("../utils");
 const utils = require("../utils");
 const anchoringStrategies = require("../strategies");
-const logger = $$.getLogger("controllers", "apihub/anchoring");
+const logger = $$.getLogger("apihub", "anchoring");
 const getStrategy = async (request) => {
     let receivedDomain;
     let domainConfig;
@@ -64,7 +64,7 @@ async function updateAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
-        logger.error(e);
+        logger.info(0x01, `Failed to get anchoring strategy`, e);
         return response.send(500, e);
     }
     strategy[action](getWritingHandler(response));
@@ -74,6 +74,7 @@ async function updateAnchor(action, request, response) {
 function getReadingHandler(response) {
     return (err, result) => {
         if (err) {
+            logger.info(0x01, `Anchor not found`);
             return response.send(404, "Anchor not found");
         }
 
@@ -94,7 +95,7 @@ async function readDataForAnchor(action, request, response) {
     try {
         strategy = await getStrategy(request);
     } catch (e) {
-        logger.error(e);
+        logger.info(0x01, `Failed to get anchoring strategy`, e);
         return response.send(500, e);
     }
     strategy[action](getReadingHandler(response));
