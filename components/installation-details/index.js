@@ -25,7 +25,7 @@ function InstallationDetails(server){
 		res.end();
 	}
 
-	function detailsHandler(req, res){
+	function devDetailsHandler(req, res){
 		const path = require("path");
 		//targetPath = the workspace folder
 		let targetPath = path.resolve("..");
@@ -46,6 +46,20 @@ function InstallationDetails(server){
 				return sendSummary(res, summary);
 			});
 		});
+	}
+	
+	function productionDetailsHandler(req, res) {
+		const resourceUsage = process.resourceUsage();
+		resourceUsage.uptime = process.uptime();
+		sendSummary(res, resourceUsage);
+	}
+
+	function detailsHandler(req, res) {
+		if (process.env.DEV === "true") {
+			return devDetailsHandler(req, res);
+		}
+
+		productionDetailsHandler(req, res);
 	}
 
 	server.get("/installation-details", detailsHandler);
