@@ -1,7 +1,7 @@
 const TokenBucket = require("../../libs/TokenBucket");
 
 function Throttler(server){
-	const logger = $$.getLogger("apihub", "Throttler");
+	const logger = $$.getLogger("Throttler", "apihub");
 	const START_TOKENS = 6000000;
 	const tokenBucket = new TokenBucket(START_TOKENS, 1, 10);
 	let remainingTokens = START_TOKENS;
