@@ -25,11 +25,12 @@ function InstallationDetails(server){
 		res.end();
 	}
 
-	function devDetailsHandler(req, res){
+	function detailsHandler(req, res){
 		const path = require("path");
 		//targetPath = the workspace folder
 		let targetPath = path.resolve("..");
 		let summary = {};
+		summary.resourceUsage = getProcessResourceUsage();
 		getLog(targetPath, (err, log)=>{
 			if(err){
 				return sendSummary(res, {err});
@@ -48,18 +49,10 @@ function InstallationDetails(server){
 		});
 	}
 	
-	function productionDetailsHandler(req, res) {
+	function getProcessResourceUsage() {
 		const resourceUsage = process.resourceUsage();
 		resourceUsage.uptime = process.uptime();
-		sendSummary(res, resourceUsage);
-	}
-
-	function detailsHandler(req, res) {
-		if (process.env.DEV === "true") {
-			return devDetailsHandler(req, res);
-		}
-
-		productionDetailsHandler(req, res);
+		return resourceUsage;
 	}
 
 	server.get("/installation-details", detailsHandler);
