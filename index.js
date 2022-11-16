@@ -7,8 +7,6 @@ process.on('uncaughtException', err => {
 const httpWrapper = require('./libs/http-wrapper');
 const Server = httpWrapper.Server;
 
-const TokenBucket = require('./libs/TokenBucket');
-const START_TOKENS = 6000000;
 const CHECK_FOR_RESTART_COMMAND_FILE_INTERVAL = 500;
 
 (function loadDefaultComponents(){
@@ -41,8 +39,6 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 	}
 
 	let port = listeningPort || 8080;
-	const tokenBucket = new TokenBucket(START_TOKENS, 1, 10);
-
 	const conf =  require('./config').getConfig();
 	const server = new Server(sslConfig);
 	server.config = conf;
@@ -127,31 +123,6 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			next();
 		});
 
-		if (conf.preventRateLimit !== true) {
-			server.use(function (req, res, next) {
-				const ip = res.socket.remoteAddress;
-				tokenBucket.takeToken(ip, tokenBucket.COST_MEDIUM, function (err, remainedTokens) {
-					res.setHeader('X-RateLimit-Limit', tokenBucket.getLimitByCost(tokenBucket.COST_MEDIUM));
-					res.setHeader('X-RateLimit-Remaining', tokenBucket.getRemainingTokenByCost(remainedTokens, tokenBucket.COST_MEDIUM));
-
-					if (err) {
-						if (err === TokenBucket.ERROR_LIMIT_EXCEEDED) {
-							res.statusCode = 429;
-						} else {
-							res.statusCode = 500;
-						}
-
-						res.end();
-						return;
-					}
-
-					next();
-				});
-			});
-		} else {
-			logger.trace(`Rate limit mechanism disabled!`);
-		}
-
 		server.options('/*', function (req, res) {
 			const headers = {};
 			// IE8 does not allow domains to be specified, just the *
@@ -176,6 +147,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
         function addRootMiddlewares() {
 			const LoggerMiddleware = require('./middlewares/logger');
 			const AuthorisationMiddleware = require('./middlewares/authorisation');
+			const Throttler = require('./middlewares/throttler');
 			const OAuth = require('./middlewares/oauth');
 			const ResponseHeaderMiddleware = require('./middlewares/responseHeader');
 			const genericErrorMiddleware = require('./middlewares/genericErrorMiddleware');
@@ -187,6 +159,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 
 			genericErrorMiddleware(server);
 			requestEnhancements(server);
+			Throttler(server);
 
             if(conf.enableJWTAuthorisation) {
                 new AuthorisationMiddleware(server);
