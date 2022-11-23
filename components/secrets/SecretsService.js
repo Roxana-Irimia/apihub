@@ -23,7 +23,10 @@ function SecretsService(serverRootFolder) {
     }
 
     const writeSecrets = (appName, secrets, callback) => {
-        const encryptedSecrets = encryptSecret(JSON.stringify(secrets));
+        if (typeof secrets === "object") {
+            secrets = JSON.stringify(secrets);
+        }
+        const encryptedSecrets = encryptSecret(secrets);
         fs.writeFile(getSecretFilePath(appName), encryptedSecrets, callback);
     }
 
@@ -71,7 +74,7 @@ function SecretsService(serverRootFolder) {
             }
 
             if (latestEncryptionKey !== encryptionKey) {
-                writeSecrets(appName, decryptedSecret, err => {
+                writeSecrets(appName, decryptedSecret.toString(), err => {
                     if (err) {
                         return callback(err);
                     }
