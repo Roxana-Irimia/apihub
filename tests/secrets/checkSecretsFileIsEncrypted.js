@@ -7,12 +7,10 @@ const fs = require("fs");
 const config = require("../../config");
 const openDSU = require("opendsu");
 const crypto = openDSU.loadAPI("crypto");
-const env = require("../../../../../env.json");
-let encryptionKey = env.SSO_SECRETS_ENCRYPTION_KEY.split(",")[0];
-encryptionKey = $$.Buffer.from(encryptionKey, "base64");
 const PUT_SECRETS_URL_PATH = "/putSSOSecret/Demiurge";
 const GET_SECRETS_URL_PATH = "/getSSOSecret/Demiurge";
 const USER_ID = "someUser";
+const secret = "some secret";
 const generateEncryptionKey = () => {
     return crypto.generateRandom(32).toString("base64");
 }
@@ -25,7 +23,6 @@ assert.callback('check if secrets endpoint encryption and key rotation work', as
     const port = await $$.promisify(tir.launchApiHubTestNode)(100,  folder);
     const url = `http://localhost:${port}`;
     const httpAPI = openDSU.loadAPI("http");
-    const secret = "some secret";
     //send a secret to the secrets endpoint for storage; secret should be encrypted with process.env.SSO_SECRETS_ENCRYPTION_KEY and stored on disk
     await $$.promisify(httpAPI.doPut)(`${url}${PUT_SECRETS_URL_PATH}`, {secret}, {headers: {"user-id": USER_ID}});
     const secretsFolderPath = path.join(folder, config.getConfig("externalStorage"), "secrets");
@@ -83,5 +80,9 @@ assert.callback('check if secrets endpoint encryption and key rotation work', as
     }
 
     assert.notEqual(error, undefined, "Decryption should fail");
+
+    process.env.SSO_SECRETS_ENCRYPTION_KEY = `${newBase64EncryptionKey}`
+    secretReadFromServer = await $$.promisify(httpAPI.doGet)(`${url}${GET_SECRETS_URL_PATH}`, {headers: {"user-id": USER_ID}});
+    assert.equal(JSON.parse(secretReadFromServer).secret, secret);
     callback()
 }, 5000000);
