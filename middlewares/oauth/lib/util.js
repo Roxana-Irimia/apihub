@@ -405,11 +405,6 @@ function getUrlsToSkip() {
     return urlsToSkip;
 }
 
-function removeTimezoneOffsetFromTimestamp(timestamp) {
-    let currentDate = new Date(timestamp);
-    return timestamp + currentDate.getTimezoneOffset() * 60 * 1000;
-}
-
 function updateAccessTokenExpiration(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, callback) {
     decryptAccessTokenCookie(currentEncryptionKeyPath, previousEncryptionKeyPath, accessTokenCookie, (err, decryptedTokenCookie)=>{
         if (err) {
@@ -443,6 +438,5 @@ module.exports = {
     getSSODetectedIdFromDecryptedToken,
     getSSODetectedIdFromEncryptedToken,
     getSSOUserIdFromDecryptedToken,
-    removeTimezoneOffsetFromTimestamp,
     updateAccessTokenExpiration
 }

@@ -229,11 +229,7 @@ function OAuthMiddleware(server) {
             return startLogoutPhase(res);
           }
 
-          const currentTimestamp = Date.now();
-          const currentDate = new Date(currentTimestamp);
-          printDebugLog("Server time", currentDate.toString());
-          const sessionExpiryTime = util.removeTimezoneOffsetFromTimestamp(currentTimestamp) + oauthConfig.sessionTimeout;
-          printDebugLog("Server normalized time", new Date(util.removeTimezoneOffsetFromTimestamp(currentTimestamp)).toString());
+          const sessionExpiryTime = Date.now() + oauthConfig.sessionTimeout;
           const cookies = [`sessionExpiryTime=${sessionExpiryTime}; Path=/`, `accessTokenCookie=${encryptedAccessToken}; Path=/`]
           res.setHeader("Set-Cookie", cookies);
           next();
