@@ -23,13 +23,13 @@ function StaticServer(server) {
             logger.trace("Serving summary for dir:", targetPath);
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
-                    logger.info(0x03, `Path <${targetPath}> was not found`)
+                    logger.info(0x04, `Path <${targetPath}> was not found`)
                     res.statusCode = 404;
                     res.end();
                     return;
                 }
                 if (!stats.isDirectory()) {
-                    logger.info(0x03, `<${targetPath}> is not a directory`)
+                    logger.info(0x04, `<${targetPath}> is not a directory`)
                     res.statusCode = 403;
                     res.end();
                     return;
@@ -249,7 +249,7 @@ function StaticServer(server) {
                     return tryToCreateAtRuntimeFromTemplates(req,(err, content)=>{
                         if(err){
                             //if any error... we have to return 404
-                            logger.info(0x03, `Failed to create from templates`)
+                            logger.info(0x04, `Failed to create from templates`)
                             res.statusCode = 404;
                             res.end();
                             return;
@@ -277,7 +277,7 @@ function StaticServer(server) {
                     const defaultPath = path.join(targetPath, defaultFileName);
                     fs.stat(defaultPath, function (err) {
                         if (err) {
-                            logger.info(0x03, `Path <${defaultPath}> was not found`)
+                            logger.info(0x04, `Path <${defaultPath}> was not found`)
                             res.statusCode = 403;
                             res.end();
                             return;
