@@ -1,7 +1,7 @@
 const logger = $$.getLogger("HttpServer", "apihub");
 
 process.on('uncaughtException', err => {
-	logger.error('There was an uncaught error', err);
+	logger.critical('There was an uncaught error', err);
 });
 
 const httpWrapper = require('./libs/http-wrapper');
