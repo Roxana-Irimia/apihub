@@ -143,7 +143,12 @@ function SecretsService(serverRootFolder) {
                 return callback(err);
             }
 
-            callback(undefined, JSON.stringify({secret: decryptedSecrets[userId]}));
+            const secret = decryptedSecrets[userId];
+            if (typeof secret === "undefined") {
+                return callback(createError(404, `Secret for user ${userId} not found`));
+            }
+
+            callback(undefined, JSON.stringify({secret}));
         })
     }
 
