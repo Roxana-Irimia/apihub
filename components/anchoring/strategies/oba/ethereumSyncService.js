@@ -46,7 +46,7 @@ function EthereumSyncService(server, config) {
                 anchor.tc = 1;
                 lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
                     if (err) {
-                        logger.trace(`Failed to update anchor ${anchor.pk} in db: ${err}`);
+                        logger.debug(`Failed to update anchor ${anchor.pk} in db: ${err}`);
                     }
 
                     taskCounter.decrement();
@@ -65,7 +65,7 @@ function EthereumSyncService(server, config) {
 
                     lokiEnclaveFacade.deleteRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, err => {
                         if (err) {
-                            logger.trace(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
+                            logger.debug(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
                         }
                     });
                     return;
@@ -77,7 +77,7 @@ function EthereumSyncService(server, config) {
                 }
                 lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
                     if (err) {
-                        logger.trace(`Failed to update anchor ${anchor.pk}: ${err}`);
+                        logger.debug(`Failed to update anchor ${anchor.pk}: ${err}`);
                     }
                 });
                 return;
@@ -86,7 +86,7 @@ function EthereumSyncService(server, config) {
             logger.info(0x102, `Anchoring for anchor ${anchor.anchorId} committed in blockchain: ${transactionHash}`);
             lokiEnclaveFacade.deleteRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, err => {
                 if (err) {
-                    logger.trace(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
+                    logger.debug(`Failed to delete anchor ${anchor.anchorId} from db: ${err}`);
                 }
             })
         })
@@ -107,7 +107,7 @@ function EthereumSyncService(server, config) {
         lokiEnclaveFacade.filter(undefined, ANCHORS_TABLE_NAME, ["scheduled == null"], "asc", (err, anchors) => {
             if (err) {
                 if (err.code !== 404) {
-                    logger.trace(`Failed to get anchors from db: ${err}`);
+                    logger.debug(`Failed to get anchors from db: ${err}`);
                 }
                 return;
             }
@@ -115,7 +115,7 @@ function EthereumSyncService(server, config) {
                 anchor.scheduled = Date.now() + (anchor.tc > 100 ? 100 : anchor.tc) * config.scheduleInterval;
                 lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
                     if (err) {
-                        logger.trace(`Failed to update anchor ${anchor.pk} in db: ${err}`);
+                        logger.debug(`Failed to update anchor ${anchor.pk} in db: ${err}`);
                     }
                 })
             })
@@ -126,7 +126,7 @@ function EthereumSyncService(server, config) {
         lokiEnclaveFacade.filter(undefined, ANCHORS_TABLE_NAME, ["scheduled != null", "scheduled != sent", `scheduled < ${Date.now()}`], "asc", config.burstSize, (err, anchors) => {
             if (err) {
                 if (err.code !== 404) {
-                    logger.trace(`Failed to get anchors from db: ${err}`);
+                    logger.debug(`Failed to get anchors from db: ${err}`);
                 }
                 return;
             }
@@ -135,7 +135,7 @@ function EthereumSyncService(server, config) {
                 anchor.scheduled = "sent";
                 lokiEnclaveFacade.updateRecord(undefined, ANCHORS_TABLE_NAME, anchor.pk, anchor, err => {
                     if (err) {
-                        logger.trace(`Failed to update anchor ${anchor.pk} in db: ${err}`);
+                        logger.debug(`Failed to update anchor ${anchor.pk} in db: ${err}`);
                         return;
                     }
 

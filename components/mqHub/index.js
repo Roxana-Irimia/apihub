@@ -163,7 +163,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 			}
 
 			try {
-				logger.trace(`Preparing to register mq endpoints for domain < ${domain} > ... `);
+				logger.debug(`Preparing to register mq endpoints for domain < ${domain} > ... `);
 				adapter(server, URL_PREFIX, domainToBeUsedByAdapter || domain, domainConfig);
 			} catch (err) {
 				logger.info(0x03, `Caught an error during initialization process of the mq for domain < ${domain} >`, err);
@@ -184,7 +184,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 				let domainInfo = virtualDomains[i];
 				if(domainInfo && domainInfo.active && domainInfo.cloneFromDomain){
 					if(testIfMQEnabled(domainInfo.cloneFromDomain, domainInfo.pk)){
-						logger.trace(`Successfully register mq endpoints for virtual domain < ${domainInfo.pk} >.`);
+						logger.debug(`Successfully register mq endpoints for virtual domain < ${domainInfo.pk} >.`);
 						domains.push(domainInfo.pk);
 					}
 				}
@@ -196,7 +196,7 @@ async function MQHub(server, signalAsyncLoading, doneLoading) {
 		for (let i = 0; i < confDomains.length; i++) {
 			let domain = confDomains[i];
 			if(testIfMQEnabled(domain)){
-				logger.trace(`Successfully register mq endpoints for domain < ${domain} >.`);
+				logger.debug(`Successfully register mq endpoints for domain < ${domain} >.`);
 				domains.push(domain);
 			}
 		}

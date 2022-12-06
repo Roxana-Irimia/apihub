@@ -57,7 +57,7 @@ async function storeVariable(dns, prop, value) {
             "variableName": prop,
             "variableContent": value
         }));
-        logger.trace(`Finished storing variable ${prop}=${value} for ${dns}`);
+        logger.debug(`Finished storing variable ${prop}=${value} for ${dns}`);
     } catch (e) {
         console.trace(e);
         process.exit(1);
@@ -71,7 +71,7 @@ async function createDomain(domainName, cloneFrom) {
             "domainName": domainName,
             "cloneFromDomain": cloneFrom
         }));
-        logger.trace(`Finished createDomain ${domainName} based on ${cloneFrom}`);
+        logger.debug(`Finished createDomain ${domainName} based on ${cloneFrom}`);
     } catch (e) {
         console.trace(e);
         process.exit(1);
@@ -85,7 +85,7 @@ async function registerTemplate(path, content) {
             path,
             content
         }));
-        logger.trace(`Finished registering template for path ${path}`);
+        logger.debug(`Finished registering template for path ${path}`);
     } catch (e) {
         console.trace(e);
         process.exit(1);

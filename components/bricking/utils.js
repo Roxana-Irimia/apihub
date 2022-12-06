@@ -12,7 +12,7 @@ function convertReadableStreamToBuffer(readStream, callback) {
 }
 
 async function getBricksDomainConfig(domain) {
-    logger.trace("Looking for domain", domain);
+    logger.debug("Looking for domain", domain);
     const config = require("../../config");
     let domainConfiguration = await config.getSafeDomainConfig(domain);
 

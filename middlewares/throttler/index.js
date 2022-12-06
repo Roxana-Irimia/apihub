@@ -43,7 +43,7 @@ function Throttler(server){
 		server.use(throttlerHandler);
 		server.get("/ready-probe", readyProbeHandler);
 	} else {
-		logger.trace(`Rate limit mechanism disabled!`);
+		logger.debug(`Rate limit mechanism disabled!`);
 		server.get("/ready-probe", function (req, res) {
 			res.statusCode = 200;
 			res.write("Server ready");

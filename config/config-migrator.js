@@ -136,7 +136,7 @@ function migrate(oldConfig, configFolderPath) {
     const path = require("path");
     const fs = require("fs");
     const apihubJsonConfigPath = path.join(configFolderPath, "apihub.json");
-    logger.trace(`Generating apihub.json config file at ${apihubJsonConfigPath}...`);
+    logger.debug(`Generating apihub.json config file at ${apihubJsonConfigPath}...`);
 
     if (!fs.existsSync(configFolderPath)) {
         fs.mkdirSync(configFolderPath, { recursive: true });
@@ -151,7 +151,7 @@ function migrate(oldConfig, configFolderPath) {
     Object.keys(domainConfigs).forEach((domain) => {
         const domainConfig = domainConfigs[domain];
         const domainConfigPath = path.join(domainConfigsFolderPath, `${domain}.json`);
-        logger.trace(`Generating config file for domain '${domain}' at ${domainConfigPath}...`);
+        logger.debug(`Generating config file for domain '${domain}' at ${domainConfigPath}...`);
         fs.writeFileSync(domainConfigPath, JSON.stringify(domainConfig, null, 2));
     });
 

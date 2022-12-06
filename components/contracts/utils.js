@@ -14,7 +14,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
         // ensure we have the SSI for the contracts DSU speficied inside domainConfig.contracts.constitution
         if (process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI) {
             contractsConfig.constitution = process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI;
-            logger.trace(
+            logger.debug(
                 `[Contracts] no constitution found for domain ${domain}. Found process.env.PSK_APIHUB_DEFAULT_CONTRACTS_DOMAIN_SSI: ${contractsConfig.constitution}`
             );
         } else {
@@ -26,7 +26,7 @@ function ensureContractConstitutionIsPresent(domain, domainConfig) {
             const pskFolder = process.env.PSK_ROOT_INSTALATION_FOLDER || path.resolve("." + __dirname + "/../../../..");
             const defaultDomainSeedPath = path.join(pskFolder, "modules/apihub-contracts/domain-seed");
 
-            logger.trace(
+            logger.debug(
                 `[Contracts] no constitution found for domain ${domain}. Trying to load constitution at ${defaultDomainSeedPath}...`
             );
 

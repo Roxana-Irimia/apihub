@@ -10,7 +10,7 @@ function setupGenericErrorMiddleware(server) {
 
         res.write = function(chunk, encoding, callback){
             if(typeof callback === "function" || typeof encoding === "function"){
-                logger.error(`${constants.LOG_IDENTIFIER}`,
+                logger.debug(`${constants.LOG_IDENTIFIER}`,
                     "Generic Error Middleware is running and has detected that a callback was used for response.write method call.",
                     "Be aware that this middleware can generate undesired behaviour in this case.", new Error());
             }
@@ -40,7 +40,7 @@ function setupGenericErrorMiddleware(server) {
 		next();
 	});
 
-    logger.error(`${constants.LOG_IDENTIFIER}`, "generic error middleware was loaded. This middleware will prevent any error to leak when sending a >=400 response to the client.");
+    logger.debug(`${constants.LOG_IDENTIFIER}`, "generic error middleware was loaded. This middleware will prevent any error to leak when sending a >=400 response to the client.");
 }
 
 module.exports = setupGenericErrorMiddleware;

@@ -76,7 +76,7 @@ function createHandlerAppendToLog(server) {
 
 function createHandlerReadFromLog(server) {
   return function readFromLog(request, response) {
-    logger.trace('running');
+    logger.debug('running');
     const today = new Date().toISOString().split('T')[0];
     const anchorID = request.params.anchorID;
     const queryObject = url.parse(request.url, true).query;

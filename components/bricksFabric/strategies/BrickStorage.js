@@ -107,19 +107,19 @@ function BrickStorage() {
     this.storeData = function(anchorData, server, callback) {
         if (this.isCommitingBlock === true)
         {
-            logger.trace("transaction cached");
+            logger.debug("transaction cached");
             this.pendingBuffer.push(anchorData);
             callback(undefined,"Transaction was added to the block.");
             return;
         }
-        logger.trace("transaction pushed to pending block");
+        logger.debug("transaction pushed to pending block");
         this.pendingTransactions.push(anchorData);
         if (this.pendingTransactions.length >= this.transactionsPerBlock)
         {
-           // logger.trace("commit block callback");
+           // logger.debug("commit block callback");
            this.completeBlock(server, callback);
         }else {
-            //logger.trace("pending callback");
+            //logger.debug("pending callback");
             callback(undefined,"Transaction was added to the block.");
         }
     }

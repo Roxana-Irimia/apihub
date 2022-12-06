@@ -40,7 +40,7 @@ function JWTIssuer(workingDir) {
 		if (seeder) {
 			try {
 				seeder = keyssiApi.parse(seeder.toString());
-				logger.trace("MQ JWT AUTH Issuer loaded.");
+				logger.debug("MQ JWT AUTH Issuer loaded.");
 				return;
 			} catch (err) {
 				logger.error("Failed to load MQ JWT AUTH Issuer info. Creating a new Issuer!",
@@ -52,7 +52,7 @@ function JWTIssuer(workingDir) {
 
 		seeder = await $$.promisify(keyssiApi.createSeedSSI)(DOMAIN_NAME);
 		await $$.promisify(fs.writeFile)(getSeederFilePath(), seeder.getIdentifier());
-		logger.trace("New MQ JWT AUTH Issuer created and saved for later use.");
+		logger.debug("New MQ JWT AUTH Issuer created and saved for later use.");
 	}
 
 	this.createToken = function (domain, options, callback) {

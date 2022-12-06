@@ -5,7 +5,7 @@ const config = require("../../../config");
 function AccessTokenValidator(server) {
     const logger = $$.getLogger("AccessTokenValidator", "apihub/oauth");
 
-    logger.trace(`Registering AccessTokenValidator middleware`);
+    logger.debug(`Registering AccessTokenValidator middleware`);
     const urlsToSkip = util.getUrlsToSkip();
 
     server.use(function (req, res, next) {

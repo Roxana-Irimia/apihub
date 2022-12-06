@@ -66,7 +66,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 	};
 
 	function bootup(){
-		logger.trace(`Trying to listen on port ${port}`);
+		logger.debug(`Trying to listen on port ${port}`);
 		server.listen(port, conf.host, listenCallback);
 	}
 
@@ -79,12 +79,12 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			const fs = require(fsname);
 			fs.readFile(restartServerFile, function(error, content) {
 				if (!error && content.toString() !== "") {
-					logger.trace(`### Preparing to restart because of the request done by file: <${restartServerFile}> File content: ${content}`);
+					logger.debug(`### Preparing to restart because of the request done by file: <${restartServerFile}> File content: ${content}`);
 					server.close();
 					server.listen(port, conf.host, () => {
 						fs.writeFile(restartServerFile, "", function(){
 							//we don't care about this file.. we just clear it's content the prevent recursive restarts
-							logger.trace(`### Restart operation finished.`);
+							logger.debug(`### Restart operation finished.`);
 						});
 					});
 				}
@@ -134,7 +134,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, token`;
 
 			if(conf.CORS){
-				logger.trace("Applying custom CORS headers");
+				logger.debug("Applying custom CORS headers");
 				for(let prop in conf.CORS){
 					headers[prop] = conf.CORS[prop];
 				}
@@ -183,7 +183,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
             if (componentPath.startsWith('.') && !conf.isDefaultComponent(componentName)) {
                 componentPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, componentPath));
             }
-            logger.trace(`Preparing to register middleware from path ${componentPath}`);
+            logger.debug(`Preparing to register middleware from path ${componentPath}`);
 
             let middlewareImplementation;
             try{
@@ -224,7 +224,7 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
                 .filter(activeComponentName => {
                 	let include = conf.componentsConfig[activeComponentName];
                 	if(!include){
-                		logger.trace(`Not able to find config for component called < ${activeComponentName} >. Excluding it from the active components list!`);
+                		logger.debug(`Not able to find config for component called < ${activeComponentName} >. Excluding it from the active components list!`);
 					}
                 	return include;
 				})
@@ -278,9 +278,9 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
         addRootMiddlewares();
 		addComponents(()=>{
 			//at this point all components were installed and we need to register the fallback handler
-			logger.trace("Registering the fallback handler. Any endpoint registered after this one will have zero changes to be executed.");
+			logger.debug("Registering the fallback handler. Any endpoint registered after this one will have zero changes to be executed.");
 			server.use(function (req, res) {
-				logger.trace("Response handled by fallback handler.");
+				logger.debug("Response handled by fallback handler.");
 				res.statusCode = 404;
 				res.end();
 			});

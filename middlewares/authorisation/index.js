@@ -6,7 +6,7 @@ const {sendUnauthorizedResponse} = require("../../utils/middlewares");
 function Authorisation(server) {
   const logger = $$.getLogger("Authorisation", "apihub/authorisation");
 
-  logger.trace(`Registering Authorisation middleware`);
+  logger.debug(`Registering Authorisation middleware`);
 
   const config = require("../../config");
   const skipJWTAuthorisation = config.getConfig("skipJWTAuthorisation");

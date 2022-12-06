@@ -19,7 +19,7 @@ module.exports = function(server){
             http = require("https");
         }
 
-        logger.trace(`Forwarding request ${options.method} to url ${url}`);
+        logger.debug(`Forwarding request ${options.method} to url ${url}`);
         try {
 
           let request = http.request(url, options, (response) => {

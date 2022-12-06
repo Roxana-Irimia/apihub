@@ -62,7 +62,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 				fileNamesAsTimestamp = sanitizeFileName(fileNamesAsTimestamp);
 				let valid = (new Date(Number(fileNamesAsTimestamp))).getTime() > 0;
 				if (!valid) {
-					logger.trace(`Found garbage in queue ${queueName} (file: ${fileNamesAsTimestamp}). Ignoring it!`);
+					logger.debug(`Found garbage in queue ${queueName} (file: ${fileNamesAsTimestamp}). Ignoring it!`);
 				}
 				return valid;
 			});
@@ -234,7 +234,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 							logger.error(err);
 						}
 
-						logger.trace(`Successfully sent message to a number of ${successCount} subs.`);
+						logger.debug(`Successfully sent message to a number of ${successCount} subs.`);
 					});
 				});
 			} else {
@@ -355,7 +355,7 @@ function LocalMQAdapter(server, prefix, domain, configuration) {
 		});
 	}
 
-	logger.trace(`Loading Local MQ Adapter for domain: ${domain}`);
+	logger.debug(`Loading Local MQ Adapter for domain: ${domain}`);
 
 	server.put(`${prefix}/${domain}/put/:queueName`, putMessageHandler); //< message
 

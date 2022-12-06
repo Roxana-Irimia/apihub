@@ -1,6 +1,6 @@
 function Logger(server) {
     const logger = $$.getLogger("Logger", "apihub/logger");
-    logger.trace(`Registering Logger middleware`);
+    logger.debug(`Registering Logger middleware`);
     
     const getRequestDuration = (start) => {
         const diff = process.hrtime(start);
@@ -25,7 +25,7 @@ function Logger(server) {
           const visualIndex = "\t";
           const requestLogs = req.getLogs();
           if(requestLogs.length > 0){
-              logger.trace("Request logs:");
+              logger.debug("Request logs:");
               for(let i=0; i<requestLogs.length; i++){
                   if(Array.isArray(requestLogs)){
                       logger.log(visualIndex, ...requestLogs[i]);

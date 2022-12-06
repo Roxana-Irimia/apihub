@@ -46,7 +46,7 @@ function addDsuWorker(seed, cookie) {
 
                 const authorizationKey = randomBuffer.toString("hex");
                 dsuWorker.authorizationKey = authorizationKey;
-                logger.trace(`Starting worker for handling seed ${seed}`);
+                logger.debug(`Starting worker for handling seed ${seed}`);
                 const worker = new Worker(dsuBootPath, {
                     workerData: {
                         seed,
@@ -62,7 +62,7 @@ function addDsuWorker(seed, cookie) {
                         return reject(message.error);
                     }
                     if (message.port) {
-                        logger.trace(
+                        logger.debug(
                             `Running worker on PORT ${message.port} for seed ${seed}. Startup took ${getElapsedTime(
                                 workerStartTime
                             )}`
@@ -76,7 +76,7 @@ function addDsuWorker(seed, cookie) {
                 });
                 worker.on("exit", (code) => {
                     if (code !== 0) {
-                        logger.trace(`Worker stopped with exit code ${code}`);
+                        logger.debug(`Worker stopped with exit code ${code}`);
                         // remove the worker from list in order to be recreated when needed
                         delete dsuWorkers[seed];
                     }
@@ -157,7 +157,7 @@ function forwardRequestToWorker(dsuWorker, req, res) {
     if (method === "POST" || method === "PUT") {
         let data = [];
         req.on("data", (chunk) => {
-            logger.trace("data.push(chunk);", chunk);
+            logger.debug("data.push(chunk);", chunk);
             data.push(chunk);
         });
 
@@ -178,7 +178,7 @@ function forwardRequestToWorker(dsuWorker, req, res) {
 }
 
 function init(server) {
-    logger.trace(`Registering CloudWallet component`);
+    logger.debug(`Registering CloudWallet component`);
 
     dsuBootPath = config.getConfig("componentsConfig", "cloudWallet", "dsuBootPath");
 
@@ -186,15 +186,15 @@ function init(server) {
         dsuBootPath = path.resolve(path.join(process.env.PSK_ROOT_INSTALATION_FOLDER, dsuBootPath));
     }
 
-    logger.trace(`Using boot script for worker: ${dsuBootPath}`);
+    logger.debug(`Using boot script for worker: ${dsuBootPath}`);
 
     cacheContainerPath = require("path").join(server.rootFolder, config.getConfig("externalStorage"), `cache`);
 
     //if a listening event is fired from this point on...
     //it means that a restart was triggered
     server.on("listening", () => {
-        logger.trace(`Restarting process in progress...`);
-        logger.trace(`Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
+        logger.debug(`Restarting process in progress...`);
+        logger.debug(`Stopping a number of ${Object.keys(dsuWorkers).length} thread workers`);
         for (let seed in dsuWorkers) {
             let worker = dsuWorkers[seed];
             if (worker && worker.terminate) {

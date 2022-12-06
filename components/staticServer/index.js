@@ -20,7 +20,7 @@ function StaticServer(server) {
         });
 
         function serverTarget(targetPath) {
-            logger.trace("Serving summary for dir:", targetPath);
+            logger.debug("Serving summary for dir:", targetPath);
             fs.stat(targetPath, function (err, stats) {
                 if (err) {
                     logger.info(0x04, `Path <${targetPath}> was not found`)
@@ -160,7 +160,7 @@ function StaticServer(server) {
                 //if any error... we fallback to normal sendFile method
                 return sendFile(res, file);
             }
-            logger.trace("Responding with template instead of file.");
+            logger.debug("Responding with template instead of file.");
             res.statusCode = 200;
 
             setMimeTypeOnResponse(req.url, res);
