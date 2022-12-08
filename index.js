@@ -1,7 +1,13 @@
 const logger = $$.getLogger("HttpServer", "apihub");
 
 process.on('uncaughtException', err => {
+	process.shuttingDown = true;
 	logger.critical('There was an uncaught error', err);
+});
+
+process.on('SIGTERM', (signal)=>{
+	process.shuttingDown = true;
+	logger.info('Received signal:', signal, ". Activating the gracefulTerminationWatcher.");
 });
 
 const httpWrapper = require('./libs/http-wrapper');
@@ -152,6 +158,19 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 			const ResponseHeaderMiddleware = require('./middlewares/responseHeader');
 			const genericErrorMiddleware = require('./middlewares/genericErrorMiddleware');
 			const requestEnhancements = require('./middlewares/requestEnhancements');
+
+			server.use(function gracefulTerminationWatcher(req, res, next) {
+				const allowedUrls = ["/installation-details", "/ready-probe"];
+				if(process.shuttingDown && allowedUrls.indexOf(req.url) === -1){
+					//uncaught exception was caught so server is shutting down gracefully and not accepting any requests
+					res.statusCode = 503;
+					logger.log(0x02, `Rejecting ${req.url} with status code ${res.statusCode} because process is shutting down.`);
+					res.end();
+					return;
+				}
+				//if the url is allowed or shuttingDown flag not present, we let the request go on...
+				next();
+			});
 
 			if(conf.enableRequestLogger) {
 				new LoggerMiddleware(server);
