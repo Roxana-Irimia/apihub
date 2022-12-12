@@ -1,7 +1,6 @@
 const logger = $$.getLogger("HttpServer", "apihub");
 
 process.on('uncaughtException', err => {
-	process.shuttingDown = true;
 	logger.critical('There was an uncaught error', err);
 });
 
