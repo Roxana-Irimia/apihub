@@ -3,12 +3,15 @@ const crypto = require("crypto");
 const worker_threads = "worker_threads";
 const { Worker } = require(worker_threads);
 const config = require("../../config");
+const { parseCookies, stringifyCookies } = require("./cookie-utils");
 const path = require("swarmutils").path;
 const logger = $$.getLogger("CloudWallet", "apihub/cloudWallet");
 let dsuBootPath;
 const dsuWorkers = {};
 
 let cacheContainerPath;
+
+const SSAPP_TOKEN_COOKIE_NAME = "SSAPP-TOKEN";
 
 const getElapsedTime = (timer) => {
     const elapsed = process.hrtime(timer)[1] / 1000000;
@@ -32,7 +35,7 @@ const INVALID_DSU_HTML_RESPONSE = `
     </html>
 `;
 
-function addDsuWorker(seed, cookie) {
+function addDsuWorker(seed, walletAnchorId, cookie) {
     const workerStartTime = process.hrtime();
     const dsuWorker = {
         port: null,
@@ -53,6 +56,7 @@ function addDsuWorker(seed, cookie) {
                         authorizationKey,
                         cookie,
                         cacheContainerPath,
+                        walletAnchorId
                     },
                 });
 
@@ -109,12 +113,12 @@ function forwardRequestToWorker(dsuWorker, req, res) {
         path: requestedPath,
         method,
         headers: {
-            authorization: dsuWorker.authorizationKey
+            authorization: dsuWorker.authorizationKey,
         },
     };
 
-    if(req.headers.cookie){
-        options.headers.cookie = req.headers.cookie
+    if (req.headers.cookie) {
+        options.headers.cookie = req.headers.cookie;
     }
 
     if (req.headers["content-type"]) {
@@ -205,11 +209,12 @@ function init(server) {
 }
 
 function handleCloudWalletRequest(request, response) {
-    const { keySSI } = request.params;
+    // use the keySSI set from the token middleware first (if present)
+    const keySSI = request.keySSI || request.params.keySSI;
 
     let dsuWorker = dsuWorkers[keySSI];
     if (!dsuWorker) {
-        dsuWorker = addDsuWorker(keySSI, request.headers.cookie);
+        dsuWorker = addDsuWorker(keySSI, request.walletAnchorId, request.headers.cookie);
     }
 
     dsuWorker.resolver
@@ -224,7 +229,67 @@ function handleCloudWalletRequest(request, response) {
         });
 }
 
+function getSSappTokenCookieValue(request) {
+    const cookies = parseCookies(request.headers.cookie);
+    let ssappTokenCookieValue = {};
+    if (cookies[SSAPP_TOKEN_COOKIE_NAME]) {
+        try {
+            ssappTokenCookieValue = JSON.parse(cookies[SSAPP_TOKEN_COOKIE_NAME]);
+            if (typeof ssappTokenCookieValue !== "object") {
+                logger.error(
+                    `Detected invalid ${SSAPP_TOKEN_COOKIE_NAME} cookie value (${cookies[SSAPP_TOKEN_COOKIE_NAME]}) parsed content`,
+                    ssappTokenCookieValue
+                );
+                ssappTokenCookieValue = {};
+            }
+        } catch (error) {
+            logger.error(`Failed to parse ${SSAPP_TOKEN_COOKIE_NAME} cookie value (${cookies[SSAPP_TOKEN_COOKIE_NAME]})`, error);
+            // reset cookie value since it has an invalid JSON content
+            ssappTokenCookieValue = {};
+        }
+    }
+    return ssappTokenCookieValue;
+}
+
+function setRequestKeySSIFromSSAppToken(request, response, next) {
+    const { keySSI } = request.params;
+    const ssappTokenCookieValue = getSSappTokenCookieValue(request);
+    if (ssappTokenCookieValue[keySSI]) {
+        logger.info(`Found match for walletAnchorId ${keySSI} to sReadSSI ${ssappTokenCookieValue[keySSI]}`);
+        request.keySSI = ssappTokenCookieValue[keySSI];
+        request.walletAnchorId = keySSI;
+    }
+    next();
+}
+
+function handleSetSSAppTokenRequest(request, response) {
+    const { walletAnchorId } = request.params;
+    const { sReadSSI } = request.body;
+
+    if (!sReadSSI) {
+        logger.error("Required sReadSSI body field not present");
+        response.statusCode = 400;
+        response.end();
+    }
+
+    const ssappTokenCookieValue = getSSappTokenCookieValue(request);
+    ssappTokenCookieValue[walletAnchorId] = sReadSSI;
+
+    const updatedTokenCookie = stringifyCookies({
+        name: SSAPP_TOKEN_COOKIE_NAME,
+        value: JSON.stringify(ssappTokenCookieValue),
+        httpOnly: true,
+        path: "/",
+        maxAge: 2147483647, // (2038-01-19 04:14:07) maximum value to avoid integer overflow on older browsers
+    });
+    response.setHeader("Set-Cookie", updatedTokenCookie);
+    response.statusCode = 200;
+    response.end();
+}
+
 module.exports = {
     init,
     handleCloudWalletRequest,
+    setRequestKeySSIFromSSAppToken,
+    handleSetSSAppTokenRequest,
 };
