@@ -7,7 +7,7 @@ const fs = require("fs");
 
 const logger = $$.getLogger("CloudWalletTest", "apihub/cloud-wallet");
 
-const MAIN_DSU_COOKIE_NAME = "MAIN_DSU_VALUE";
+const MAIN_DSU_COOKIE_NAME = "MAIN-DSU-VALUE";
 
 const opendsu = require("opendsu");
 const http = opendsu.loadApi("http");
