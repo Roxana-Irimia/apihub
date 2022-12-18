@@ -5,7 +5,7 @@ const { parseCookies, stringifyCookies } = require("../../utils/cookie-utils");
 
 const logger = $$.getLogger("controller", "apihub/mainDSU");
 
-const MAIN_DSU_VALUE_COOKIE_NAME = "MAIN_DSU_VALUE";
+const MAIN_DSU_VALUE_COOKIE_NAME = "MAIN-DSU-VALUE";
 const MAIN_DSU_VALUE_COOKIE_DEFAULT = "default";
 
 // keep already loaded main DSUs KeySSI
