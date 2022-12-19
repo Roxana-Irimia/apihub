@@ -74,7 +74,7 @@ async function updateAnchor(action, request, response) {
 function getReadingHandler(response) {
     return (err, result) => {
         if (err) {
-            logger.info(0x01, `Anchor not found`);
+            logger.info(0x01, `Anchor not found`, err);
             return response.send(404, "Anchor not found");
         }
 
