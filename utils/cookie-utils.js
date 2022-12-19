@@ -1,8 +1,10 @@
 const COOKIE_REGEX = /([^;=\s]*)=([^;]*)/g;
 
 function parseCookies(str) {
-    console.log("COOKIE", str);
     let cookies = {};
+    if (!str) {
+        return cookies;
+    }
     for (let m; (m = COOKIE_REGEX.exec(str)); ) {
         cookies[m[1]] = decodeURIComponent(m[2]);
     }

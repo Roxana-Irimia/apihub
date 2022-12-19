@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const worker_threads = "worker_threads";
 const { Worker } = require(worker_threads);
 const config = require("../../config");
-const { parseCookies, stringifyCookies } = require("./cookie-utils");
+const { parseCookies, stringifyCookies } = require("../../utils/cookie-utils");
 const path = require("swarmutils").path;
 const logger = $$.getLogger("CloudWallet", "apihub/cloudWallet");
 let dsuBootPath;
