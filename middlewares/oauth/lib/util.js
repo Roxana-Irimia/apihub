@@ -330,8 +330,11 @@ function getPublicKey(jwksEndpoint, rawAccessToken, callback) {
             const parsedData = JSON.parse(rawData);
             const accessToken = parseAccessToken(rawAccessToken);
             publicKey = parsedData.keys.find(key => key.use === "sig" && key.kid === accessToken.header.kid);
+            if (!publicKey) {
+                return callback(Error(`Could not get private key for the provided token's signature verification.`))
+            }
         } catch (e) {
-            callback(e);
+            return callback(e);
         }
 
         callback(undefined, publicKey);
