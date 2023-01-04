@@ -21,6 +21,9 @@ const defaultSettings = {
 }
 
 async function MQHub(server, signalAsyncLoading, doneLoading) {
+
+	server.registerAccessControlAllowHeaders(["token", "authorization"]);
+
 	const logger = $$.getLogger("MQHub", "apihub/mqHub");
 
 	signalAsyncLoading();

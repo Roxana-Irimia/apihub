@@ -100,6 +100,39 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 	server.on('listening', bindFinished);
 	server.on('error', listenCallback);
 
+	let accessControlAllowHeaders = new Set();
+	accessControlAllowHeaders.add("Content-Type");
+	accessControlAllowHeaders.add("Content-Length");
+	accessControlAllowHeaders.add("X-Content-Length");
+	accessControlAllowHeaders.add("Access-Control-Allow-Origin");
+	accessControlAllowHeaders.add("User-Agent");
+	accessControlAllowHeaders.add("Authorization");
+
+	server.registerAccessControlAllowHeaders = function(headers){
+		if(headers){
+			if(Array.isArray(headers)){
+				for(let i=0; i<headers.length; i++){
+					accessControlAllowHeaders.add(headers[i]);
+				}
+			}else{
+				accessControlAllowHeaders.add(headers);
+			}
+		}
+	}
+
+	server.getAccessControlAllowHeadersAsString = function(){
+		let headers = "";
+		let notFirst = false;
+		for(let header of accessControlAllowHeaders){
+			if(notFirst){
+				headers += ", ";
+			}
+			notFirst = true;
+			headers += header;
+		}
+		return headers;
+	}
+
 	function bindFinished(err) {
 		if (err) {
 			logger.error(err);
@@ -121,22 +154,25 @@ function HttpServer({ listeningPort, rootFolder, sslConfig, dynamicPort, restart
 		}
 		endpointsAlreadyRegistered = true;
 		server.use(function (req, res, next) {
-			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host);
-			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-			res.setHeader('Access-Control-Allow-Headers', `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, token`);
+			res.setHeader('Access-Control-Allow-Origin', req.headers.origin || req.headers.host || "*");
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+			res.setHeader('Access-Control-Allow-Headers', server.getAccessControlAllowHeadersAsString());
 			res.setHeader('Access-Control-Allow-Credentials', true);
 			next();
 		});
 
 		server.options('/*', function (req, res) {
 			const headers = {};
-			// IE8 does not allow domains to be specified, just the *
-			headers['Access-Control-Allow-Origin'] = req.headers.origin;
-			// headers['Access-Control-Allow-Origin'] = '*';
+			//origin header maybe missing (eg. Postman call or proxy that doesn't forward the origin header etc.)
+			if(req.headers.origin){
+				headers['Access-Control-Allow-Origin'] = req.headers.origin;
+			}else{
+				headers['Access-Control-Allow-Origin'] = '*';
+			}
 			headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE, OPTIONS';
 			headers['Access-Control-Allow-Credentials'] = true;
 			headers['Access-Control-Max-Age'] = '3600'; //one hour
-			headers['Access-Control-Allow-Headers'] = `Content-Type, Content-Length, X-Content-Length, Access-Control-Allow-Origin, User-Agent, Authorization, token`;
+			headers['Access-Control-Allow-Headers'] = server.getAccessControlAllowHeadersAsString();
 
 			if(conf.CORS){
 				logger.debug("Applying custom CORS headers");
